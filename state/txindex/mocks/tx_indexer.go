@@ -8,7 +8,7 @@ import (
 	mock "github.com/stretchr/testify/mock"
 	query "github.com/tendermint/tendermint/libs/pubsub/query"
 
-	txindex "github.com/tendermint/tendermint/state/txindex"
+	"github.com/numiadata/tools/pubsub"
 
 	types "github.com/tendermint/tendermint/abci/types"
 )
@@ -19,11 +19,11 @@ type TxIndexer struct {
 }
 
 // AddBatch provides a mock function with given fields: b
-func (_m *TxIndexer) AddBatch(b *txindex.Batch) error {
+func (_m *TxIndexer) AddBatch(b *pubsub.Batch) error {
 	ret := _m.Called(b)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(*txindex.Batch) error); ok {
+	if rf, ok := ret.Get(0).(func(*pubsub.Batch) error); ok {
 		r0 = rf(b)
 	} else {
 		r0 = ret.Error(0)

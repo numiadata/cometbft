@@ -42,11 +42,8 @@ import (
 	rpcserver "github.com/tendermint/tendermint/rpc/jsonrpc/server"
 	sm "github.com/tendermint/tendermint/state"
 	"github.com/tendermint/tendermint/state/indexer"
-	blockidxkv "github.com/tendermint/tendermint/state/indexer/block/kv"
 	blockidxnull "github.com/tendermint/tendermint/state/indexer/block/null"
-	"github.com/tendermint/tendermint/state/indexer/sink/psql"
 	"github.com/tendermint/tendermint/state/txindex"
-	"github.com/tendermint/tendermint/state/txindex/kv"
 	"github.com/tendermint/tendermint/state/txindex/null"
 	"github.com/tendermint/tendermint/statesync"
 	"github.com/tendermint/tendermint/store"
@@ -280,25 +277,7 @@ func createAndStartIndexerService(
 	)
 
 	switch config.TxIndex.Indexer {
-	case "kv":
-		store, err := dbProvider(&DBContext{"tx_index", config})
-		if err != nil {
-			return nil, nil, nil, err
-		}
 
-		txIndexer = kv.NewTxIndex(store)
-		blockIndexer = blockidxkv.New(dbm.NewPrefixDB(store, []byte("block_events")))
-
-	case "psql":
-		if config.TxIndex.PsqlConn == "" {
-			return nil, nil, nil, errors.New(`no psql-conn is set for the "psql" indexer`)
-		}
-		es, err := psql.NewEventSink(config.TxIndex.PsqlConn, chainID)
-		if err != nil {
-			return nil, nil, nil, fmt.Errorf("creating psql indexer: %w", err)
-		}
-		txIndexer = es.TxIndexer()
-		blockIndexer = es.BlockIndexer()
 	case "pubsub":
 		if config.TxIndex.PubsubProjectID == "" {
 			return nil, nil, nil, errors.New("no 'pubsub-project-id' is set for the 'pubsub' indexer")

@@ -1,15 +1,11 @@
 package core
 
 import (
-	"errors"
 	"fmt"
-	"sort"
 
 	cmtmath "github.com/tendermint/tendermint/libs/math"
-	cmtquery "github.com/tendermint/tendermint/libs/pubsub/query"
 	ctypes "github.com/tendermint/tendermint/rpc/core/types"
 	rpctypes "github.com/tendermint/tendermint/rpc/jsonrpc/types"
-	blockidxnull "github.com/tendermint/tendermint/state/indexer/block/null"
 	"github.com/tendermint/tendermint/types"
 )
 
@@ -190,58 +186,5 @@ func BlockSearch(
 	pagePtr, perPagePtr *int,
 	orderBy string,
 ) (*ctypes.ResultBlockSearch, error) {
-
-	// skip if block indexing is disabled
-	if _, ok := env.BlockIndexer.(*blockidxnull.BlockerIndexer); ok {
-		return nil, errors.New("block indexing is disabled")
-	}
-	q, err := cmtquery.New(query)
-	if err != nil {
-		return nil, err
-	}
-
-	results, err := env.BlockIndexer.Search(ctx.Context(), q)
-	if err != nil {
-		return nil, err
-	}
-
-	// sort results (must be done before pagination)
-	switch orderBy {
-	case "desc", "":
-		sort.Slice(results, func(i, j int) bool { return results[i] > results[j] })
-
-	case "asc":
-		sort.Slice(results, func(i, j int) bool { return results[i] < results[j] })
-
-	default:
-		return nil, errors.New("expected order_by to be either `asc` or `desc` or empty")
-	}
-
-	// paginate results
-	totalCount := len(results)
-	perPage := validatePerPage(perPagePtr)
-
-	page, err := validatePage(pagePtr, perPage, totalCount)
-	if err != nil {
-		return nil, err
-	}
-
-	skipCount := validateSkipCount(page, perPage)
-	pageSize := cmtmath.MinInt(perPage, totalCount-skipCount)
-
-	apiResults := make([]*ctypes.ResultBlock, 0, pageSize)
-	for i := skipCount; i < skipCount+pageSize; i++ {
-		block := env.BlockStore.LoadBlock(results[i])
-		if block != nil {
-			blockMeta := env.BlockStore.LoadBlockMeta(block.Height)
-			if blockMeta != nil {
-				apiResults = append(apiResults, &ctypes.ResultBlock{
-					Block:   block,
-					BlockID: blockMeta.BlockID,
-				})
-			}
-		}
-	}
-
-	return &ctypes.ResultBlockSearch{Blocks: apiResults, TotalCount: totalCount}, nil
+	return &ctypes.ResultBlockSearch{}, nil
 }

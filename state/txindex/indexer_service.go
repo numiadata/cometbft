@@ -3,6 +3,8 @@ package txindex
 import (
 	"context"
 
+	"github.com/numiadata/tools/pubsub"
+
 	"github.com/tendermint/tendermint/libs/service"
 	"github.com/tendermint/tendermint/state/indexer"
 	"github.com/tendermint/tendermint/types"
@@ -62,13 +64,21 @@ func (is *IndexerService) OnStart() error {
 			msg := <-blockHeadersSub.Out()
 			eventDataHeader := msg.Data().(types.EventDataNewBlockHeader)
 			height := eventDataHeader.Header.Height
-			batch := NewBatch(eventDataHeader.NumTxs)
+			batch := pubsub.NewBatch(eventDataHeader.NumTxs)
 
 			for i := int64(0); i < eventDataHeader.NumTxs; i++ {
 				msg2 := <-txsSub.Out()
 				txResult := msg2.Data().(types.EventDataTx).TxResult
 
-				if err = batch.Add(&txResult); err != nil {
+				pt := pubsub.TxResult{
+					Height:         height,
+					Index:          txResult.Index,
+					Tx:             txResult.Tx,
+					Result:         txResult.Result,
+					BlockTimestamp: eventDataHeader.Header.Time,
+				}
+
+				if err = batch.Add(&pt); err != nil {
 					is.Logger.Error(
 						"failed to add tx to batch",
 						"height", height,

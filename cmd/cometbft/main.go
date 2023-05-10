@@ -18,7 +18,6 @@ func main() {
 		cmd.InitFilesCmd,
 		cmd.ProbeUpnpCmd,
 		cmd.LightCmd,
-		cmd.ReIndexEventCmd,
 		cmd.ReplayCmd,
 		cmd.ReplayConsoleCmd,
 		cmd.ResetAllCmd,
